@@ -1,6 +1,4 @@
-import * as React from 'react';
+import { useContext } from 'react';
+import { AuthContext } from './provider/AuthProvider/context/AuthContext';
 
-// Delete me
-export const Thing = () => {
-  return <div>Welcome to your first test package.</div>;
-};
+export const useAuth = () => useContext(AuthContext);
