@@ -7,7 +7,6 @@ import { useAuth } from '../../..';
 import jwt from 'jsonwebtoken';
 import { Role } from '../../../helper/jwt';
 import { AxiosError } from 'axios';
-import { AuthContext } from '../context/AuthContext';
 
 jest.mock('../../../service/api/authentication/authentication');
 jest.mock('../../../service/api/customer/customer');
