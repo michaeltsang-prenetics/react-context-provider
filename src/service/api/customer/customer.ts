@@ -1,4 +1,4 @@
-import { Identity } from '../../type/Customer';
+// import { Identity } from '../../type/Customer';
 import { AuthHeader, ErrorHandler, request } from '../client';
 
 const application = '/customer';
@@ -42,23 +42,23 @@ export const postCreateAccount = (context: CreateAccountContext, token: string, 
 };
 
 // Get Account info
-export type AccountContext = {
-    customerId: string;
-};
+// export type AccountContext = {
+//     customerId: string;
+// };
 
-export const getAccount = (context: AccountContext, token: string, handler: ErrorHandler) => {
-    return request(
-        {
-            url: application + '/v1.0/customer/:customerid',
-            method: 'GET',
-            headers: AuthHeader(token),
-        },
-        handler,
-        { customerid: context.customerId },
-    ).then(response => {
-        return {
-            profile: response?.data.profile,
-            identities: response?.data.identities as Identity[],
-        };
-    });
-};
+// export const getAccount = (context: AccountContext, token: string, handler: ErrorHandler) => {
+//     return request(
+//         {
+//             url: application + '/v1.0/customer/:customerid',
+//             method: 'GET',
+//             headers: AuthHeader(token),
+//         },
+//         handler,
+//         { customerid: context.customerId },
+//     ).then(response => {
+//         return {
+//             profile: response?.data.profile,
+//             identities: response?.data.identities as Identity[],
+//         };
+//     });
+// };

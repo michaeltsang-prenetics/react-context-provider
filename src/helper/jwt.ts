@@ -1,12 +1,16 @@
 import jwt, { JwtPayload } from 'jwt-decode';
 import moment from 'moment';
-import { Moment } from 'moment';
-import { LoginType } from '../service/type/Customer';
-// import { capture } from './error';
 
 export enum Role {
     CustomerUser = 'customer_user',
     OtpVerified = 'otp_verified',
+}
+
+enum LoginType {
+    Basic = 'basic',
+    Mobile = 'mobile',
+    WeChat = 'wechat',
+    Email = 'email',
 }
 
 type Ccs =
@@ -21,28 +25,17 @@ type Ccs =
           username: string;
       };
 
-type Token = {
-    ccs: Array<Ccs>;
-    exp: Moment;
-    iat: Moment;
-    nbf: Moment;
-    roles: Role[];
-    sub: string;
-    uid: string;
-};
+interface Token extends JwtPayload {
+    ccs?: Array<Ccs>;
+    roles?: Role[];
+    uid?: string;
+}
 
-export const getCustomerId = (input: string): string | undefined => {
-    try {
-        const decoded = jwt(input);
-        const token = decoded as Token;
-        if (token.roles && token.roles.find(role => role === Role.CustomerUser)) {
-            const ccs = token.ccs[0] as Ccs;
-            if (ccs.type === 'metadata') {
-                return ccs.customerId;
-            }
-        }
-    } catch (error) {
-        // capture(new Error(`Error getting customer ID from token: ${error}`));
+const capture = (e: unknown) => {
+    if (e instanceof Error) {
+        console.warn(`Invalid jwt: ${e.message}`);
+    } else {
+        console.warn(`Invalid jwt: ${e}`);
     }
 };
 
@@ -50,9 +43,10 @@ export const getUserId = (input: string): string | undefined => {
     try {
         const decoded = jwt(input);
         const token = decoded as Token;
-        if (token.uid) return token.uid;
+        return token.uid;
     } catch (error) {
-        // capture(new Error(`Error getting user ID from token: ${error}`));
+        capture(error);
+        return;
     }
 };
 
@@ -60,10 +54,10 @@ export const getRoles = (input: string): Role[] | undefined => {
     try {
         const decoded = jwt(input);
         const token = decoded as Token;
-        const role = token.roles && token.roles;
-        return role;
+        return token.roles;
     } catch (error) {
-        // capture(new Error(`Error getting role from token: ${error}`));
+        capture(error);
+        return;
     }
 };
 
@@ -80,6 +74,7 @@ export const isActive = (input: string): boolean | undefined => {
         if (!moment(exp).isAfter(now)) return false;
         return true;
     } catch (error) {
-        // capture(error);
+        capture(error);
+        return;
     }
 };

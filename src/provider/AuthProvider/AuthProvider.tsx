@@ -113,10 +113,12 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
     }, []);
 
     const updatePassword = useCallback(async (password: string, jwt: string) => {
+        const uid = JWT.getUserId(jwt);
+        if (!uid) {
+            throw new Error('Missing user ID');
+        }
+
         try {
-            if (!jwt) throw new Error('Not Authorized');
-            const uid = JWT.getUserId(jwt);
-            if (!uid) throw new Error('Missing user ID');
             await AuthService.putUpdateUser(
                 {
                     userid: uid,
@@ -125,9 +127,8 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
                 jwt,
                 ApiErrorHandler,
             );
-        } catch (error) {
-            // capture(error);
-            return Promise.reject();
+        } catch (e) {
+            throw e;
         }
     }, []);
 

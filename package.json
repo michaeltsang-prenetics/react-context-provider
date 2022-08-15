@@ -1,6 +1,6 @@
 {
   "name": "@michaeltsang-prenetics/react-context-provider",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "license": "MIT",
   "author": "Michael Tsang",
   "main": "dist/index.js",
@@ -29,7 +29,8 @@
     }
   },
   "jest": {
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jsdom",
+    "coverageReporters": ["text", "text-summary"]
   },
   "peerDependencies": {
     "react": ">=16"
@@ -60,6 +61,7 @@
     "@types/uuid": "^8.3.4",
     "dts-cli": "^1.5.2",
     "husky": "^8.0.1",
+    "jest-mock-extended": "^2.0.7",
     "jsonwebtoken": "^8.5.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
