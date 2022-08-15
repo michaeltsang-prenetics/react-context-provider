@@ -1,5 +1,6 @@
 export enum AuthorizationErrorReason {
     Expired = 'ERR_EXPIRED',
+    Unauthroized = 'ERR_UNAUTHORIZED',
 }
 export class AuthorizationError extends Error {
     reason: AuthorizationErrorReason;

@@ -4,6 +4,7 @@ import * as ProfileService from '../../../service/api/profile/profile';
 import { useAuth } from '../../AuthProvider/AuthProvider';
 import { CreateProfileContext, DeleteProfileContext } from '../../../service/api/profile/profile';
 import { Profile, Ethnicity, Gender } from '../../../service/api/profile/type';
+import { AuthorizationError, AuthorizationErrorReason } from '../../../type/error/AuthorizationError';
 
 jest.mock('../../../service/api/profile/profile');
 jest.mock('../../AuthProvider/AuthProvider');
@@ -98,7 +99,7 @@ describe('init', () => {
     test('token update should init profile status', async () => {
         // Arrange
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN', isAuthReady: true });
+        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
         const { result } = renderHook(() => useProfile(), {
             wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
         });
@@ -116,7 +117,7 @@ describe('init', () => {
 
     test('with no token should set provider state to be ready', async () => {
         // Arrange
-        (useAuth as jest.Mock).mockReturnValue({ token: '', isAuthReady: true });
+        (useAuth as jest.Mock).mockReturnValue({ token: '' });
         const { result } = renderHook(() => useProfile(), {
             wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
         });
@@ -129,7 +130,7 @@ describe('init', () => {
 });
 
 describe('@createProfile', () => {
-    test('without authorization should throw error', async () => {
+    test('without token should throw error', async () => {
         // Arrange
         (useAuth as jest.Mock).mockReturnValue({ token: undefined });
         (ProfileService.postCreateProfile as jest.Mock).mockResolvedValue(stubCreateProfileContext);
@@ -140,14 +141,14 @@ describe('@createProfile', () => {
 
         // Act + Assert
         expect(result.current.profiles).toBeUndefined();
-        await expect(result.current.createProfile(stubCreateProfileContext)).rejects.toEqual('Not authorized');
+        await expect(result.current.createProfile(stubCreateProfileContext)).rejects.toThrow(new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized));
         expect(result.current.profiles).toBeUndefined();
     });
 
     describe('with existing profiles', () => {
         test('should switch current profile to the new one', async () => {
             // Arrange
-            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN', isAuthReady: true });
+            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
             (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile_JohnD]);
             const { result } = renderHook(() => useProfile(), {
                 wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
@@ -166,7 +167,7 @@ describe('@createProfile', () => {
 
         test('should keep current profile status', async () => {
             // Arrange
-            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN', isAuthReady: true });
+            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
             (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile_JohnD]);
             const { result } = renderHook(() => useProfile(), {
                 wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
@@ -269,7 +270,7 @@ describe('@updateProfile', () => {
 
             // Act + Assert
             expect(result.current.currentProfile?.name.firstName).toBeUndefined();
-            await expect(result.current.updateProfile(stubProfile.profileId, profileCategory)).rejects.toEqual('Not authorized');
+            await expect(result.current.updateProfile(stubProfile.profileId, profileCategory)).rejects.toThrow(new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized));
             expect(result.current.currentProfile?.name.firstName).toBeUndefined();
             expect(result.current.profiles).toBeUndefined();
         });
@@ -286,7 +287,7 @@ describe('@updateProfile', () => {
 
             // Act + Assert
             expect(result.current.currentProfile?.preference?.language).toBeUndefined();
-            expect(result.current.updateProfile(stubProfile.profileId, profileCategory)).rejects.toEqual('Not authorized');
+            expect(result.current.updateProfile(stubProfile.profileId, profileCategory)).rejects.toThrow(new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized));
             expect(result.current.currentProfile?.preference?.language).toBeUndefined();
             expect(result.current.profiles).toBeUndefined();
         });
@@ -303,7 +304,7 @@ describe('@updateProfile', () => {
 
             // Act + Assert
             expect(result.current.currentProfile?.health?.dob).toBeUndefined();
-            expect(result.current.updateProfile(stubProfile.profileId, profileCategory)).rejects.toEqual('Not authorized');
+            expect(result.current.updateProfile(stubProfile.profileId, profileCategory)).rejects.toThrow(new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized));
             expect(result.current.currentProfile?.health?.dob).toBeUndefined();
             expect(result.current.profiles).toBeUndefined();
         });
@@ -317,7 +318,9 @@ describe('@updateProfile', () => {
 
             // Act + Assert
             expect(result.current.currentProfile?.phone).toBeUndefined();
-            expect(result.current.updateProfile(stubProfile.profileId, { phone: { number: '98765432', countryCode: 'hk' } })).rejects.toEqual('Not authorized');
+            expect(result.current.updateProfile(stubProfile.profileId, { phone: { number: '98765432', countryCode: 'hk' } })).rejects.toThrow(
+                new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized),
+            );
             expect(result.current.currentProfile?.phone).toBeUndefined();
             expect(result.current.profiles).toBeUndefined();
         });
@@ -327,7 +330,7 @@ describe('@updateProfile', () => {
 describe('@deleteProfile', () => {
     test('delete current profile should reset profile status', async () => {
         // Arrange
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN', isAuthReady: true });
+        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
         (ProfileService.deleteRemoveProfile as jest.Mock).mockResolvedValue(stubDeleteProfileContext);
         const { result } = renderHook(() => useProfile(), {
@@ -347,7 +350,7 @@ describe('@deleteProfile', () => {
         expect(result.current.currentProfile).toBeUndefined();
     });
 
-    test('delete profile without authorization should throw error', async () => {
+    test('without authorization should throw error', async () => {
         // Arrange
         (useAuth as jest.Mock).mockReturnValue({ token: undefined });
         (ProfileService.deleteRemoveProfile as jest.Mock).mockResolvedValue(stubProfile);
@@ -357,7 +360,9 @@ describe('@deleteProfile', () => {
 
         // Act + Assert
         expect(result.current.profiles).toBeUndefined();
-        await expect(result.current.deleteProfile(stubDeleteProfileContext.profileId)).rejects.toEqual('Not authorized');
+        await act(async () => {
+            await expect(result.current.deleteProfile(stubDeleteProfileContext.profileId)).rejects.toThrow(new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized));
+        });
         expect(result.current.profiles).toBeUndefined();
     });
 });

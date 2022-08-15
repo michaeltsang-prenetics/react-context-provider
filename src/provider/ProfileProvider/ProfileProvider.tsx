@@ -7,19 +7,24 @@ import { getRootProfile, getStandardProfile } from './filter';
 import { CreateProfileContext } from '../../service/api/profile/profile';
 import equal from 'fast-deep-equal';
 import { usePrevious } from '../../hook/usePrevious';
-import { Profile, ProfileCategory, Identity, ProfileIdentity, Address } from '../../service/api/profile/type';
+import { Profile, ProfileCategory } from '../../service/api/profile/type';
+import { AuthorizationError, AuthorizationErrorReason } from '../../type/error/AuthorizationError';
 
 type Props = {
     locale?: string;
+    cached?: Profile;
     capturing?: (e: unknown) => void;
 };
 
-export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, locale = 'en-HK', capturing }) => {
+export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, locale = 'en-HK', cached, capturing }) => {
+    // Provider
+    const { token } = useAuth();
+
+    // State
     const [isReady, setReady] = useState(false);
     const [profiles, setStandardProfiles] = useState<Profile[]>();
     const [rootProfile, setRootProfile] = useState<Profile>();
     const [currentProfile, setCurrentProfile] = useState<Profile | undefined>();
-    const { token } = useAuth();
     const prevRootProfile = usePrevious(rootProfile);
     const prevCurrentProfile = usePrevious(currentProfile);
 
@@ -41,7 +46,7 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
     const createProfile = useCallback(
         async (profile: CreateProfileContext) => {
             try {
-                if (!token) throw new Error('Not authorized');
+                if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
                 console.log(`Creating profile ${profile.firstName} ${profile.lastName}`);
                 const newProfie = await ProfileService.postCreateProfile(
                     {
@@ -60,7 +65,7 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                 return newProfie;
             } catch (error) {
                 capture(error);
-                return Promise.reject(error instanceof Error ? error.message : 'Unexpected error');
+                throw error;
             }
         },
         [capture, refreshProfiles, token],
@@ -69,7 +74,7 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
     const updateProfile = useCallback(
         async (profileId: string, category: ProfileCategory, refresh = true) => {
             try {
-                if (!token) throw new Error('Not authorized');
+                if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
 
                 category.preference &&
                     category.preference?.language &&
@@ -137,7 +142,7 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                 }
             } catch (error) {
                 capture(error);
-                return Promise.reject(error instanceof Error ? error.message : 'Unexpected error');
+                throw error;
             }
         },
         [capture, refreshProfiles, token],
@@ -146,129 +151,132 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
     const deleteProfile = useCallback(
         async (profileId: string) => {
             try {
-                if (!token) throw new Error('Not authorized');
+                if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
                 await ProfileService.deleteRemoveProfile({ profileId: profileId }, token, ApiErrorHandler);
                 await refreshProfiles();
             } catch (error) {
                 capture(error);
-                return Promise.reject(error instanceof Error ? error.message : 'Unexpected error');
+                throw error;
             }
         },
         [capture, refreshProfiles, token],
     );
 
-    const createTag = useCallback(
-        async (profile: Profile, tag: string, token: string) => {
-            await ProfileService.postCreateTag(
-                {
-                    profileId: profile.profileId,
-                    tag: tag,
-                },
-                token,
-                ApiErrorHandler,
-            );
-            await refreshProfiles();
-        },
-        [refreshProfiles],
-    );
+    // const createTag = useCallback(
+    //     async (profile: Profile, tag: string, token: string) => {
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
+    //         await ProfileService.postCreateTag(
+    //             {
+    //                 profileId: profile.profileId,
+    //                 tag: tag,
+    //             },
+    //             token,
+    //             ApiErrorHandler,
+    //         );
+    //         await refreshProfiles();
+    //     },
+    //     [refreshProfiles],
+    // );
 
-    const updateTag = useCallback(
-        async (profile: Profile, tag: string, token: string) => {
-            await ProfileService.putUpdateTag(
-                {
-                    profileId: profile.profileId,
-                    tag: tag,
-                },
-                token,
-                ApiErrorHandler,
-            );
-            await refreshProfiles();
-        },
-        [refreshProfiles],
-    );
+    // const updateTag = useCallback(
+    //     async (profile: Profile, tag: string, token: string) => {
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
+    //         await ProfileService.putUpdateTag(
+    //             {
+    //                 profileId: profile.profileId,
+    //                 tag: tag,
+    //             },
+    //             token,
+    //             ApiErrorHandler,
+    //         );
+    //         await refreshProfiles();
+    //     },
+    //     [refreshProfiles],
+    // );
 
-    const deleteTag = useCallback(
-        async (profile: Profile, tagId: string, token: string) => {
-            await ProfileService.deleteTag(
-                {
-                    profileId: profile.profileId,
-                    tagId,
-                },
-                token,
-                ApiErrorHandler,
-            );
-            await refreshProfiles();
-        },
-        [refreshProfiles],
-    );
+    // const deleteTag = useCallback(
+    //     async (profile: Profile, tagId: string, token: string) => {
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
+    //         await ProfileService.deleteTag(
+    //             {
+    //                 profileId: profile.profileId,
+    //                 tagId,
+    //             },
+    //             token,
+    //             ApiErrorHandler,
+    //         );
+    //         await refreshProfiles();
+    //     },
+    //     [refreshProfiles],
+    // );
 
-    const createIdentity = useCallback(
-        async (profileId: string, identity: Identity) => {
-            if (!token) throw new Error('Not authorized');
-            await ProfileService.postProfileIdentity(
-                {
-                    profileId,
-                    ...identity,
-                },
-                token,
-                ApiErrorHandler,
-            );
-            await refreshProfiles();
-        },
-        [refreshProfiles, token],
-    );
+    // const createIdentity = useCallback(
+    //     async (profileId: string, identity: Identity) => {
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
+    //         await ProfileService.postProfileIdentity(
+    //             {
+    //                 profileId,
+    //                 ...identity,
+    //             },
+    //             token,
+    //             ApiErrorHandler,
+    //         );
+    //         await refreshProfiles();
+    //     },
+    //     [refreshProfiles, token],
+    // );
 
-    const updateIdentity = useCallback(
-        async (profileId: string, profileIdentity: ProfileIdentity) => {
-            if (!token) throw new Error('Not authorized');
-            await ProfileService.putUpdateProfileIdentity(
-                {
-                    profileId,
-                    ...profileIdentity,
-                },
-                token,
-                ApiErrorHandler,
-            );
-            await refreshProfiles();
-        },
-        [refreshProfiles, token],
-    );
+    // const updateIdentity = useCallback(
+    //     async (profileId: string, profileIdentity: ProfileIdentity) => {
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
+    //         await ProfileService.putUpdateProfileIdentity(
+    //             {
+    //                 profileId,
+    //                 ...profileIdentity,
+    //             },
+    //             token,
+    //             ApiErrorHandler,
+    //         );
+    //         await refreshProfiles();
+    //     },
+    //     [refreshProfiles, token],
+    // );
 
-    const deleteIdentity = useCallback(
-        async (profileId: string, identityId: string) => {
-            if (!token) throw new Error('Not authorized');
-            await ProfileService.deleteProfileIdentity(
-                {
-                    profileId,
-                    identityId,
-                },
-                token,
-                ApiErrorHandler,
-            );
-            await refreshProfiles();
-        },
-        [refreshProfiles, token],
-    );
+    // const deleteIdentity = useCallback(
+    //     async (profileId: string, identityId: string) => {
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
+    //         await ProfileService.deleteProfileIdentity(
+    //             {
+    //                 profileId,
+    //                 identityId,
+    //             },
+    //             token,
+    //             ApiErrorHandler,
+    //         );
+    //         await refreshProfiles();
+    //     },
+    //     [refreshProfiles, token],
+    // );
 
-    const createAddress = useCallback(
-        async (profileId: string, address: Address) => {
-            if (!token) throw new Error('Not authorized');
-            await ProfileService.postCreateProfileAddress(
-                {
-                    profileId,
-                    address,
-                },
-                token,
-                ApiErrorHandler,
-            );
-            await refreshProfiles();
-        },
-        [refreshProfiles, token],
-    );
+    // const createAddress = useCallback(
+    //     async (profileId: string, address: Address) => {
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
+    //         await ProfileService.postCreateProfileAddress(
+    //             {
+    //                 profileId,
+    //                 address,
+    //             },
+    //             token,
+    //             ApiErrorHandler,
+    //         );
+    //         await refreshProfiles();
+    //     },
+    //     [refreshProfiles, token],
+    // );
 
     // const updateQuestionnaire = useCallback(
     //     async (profileId: string, questionnaire: Questionnaire) => {
-    //         if (!token) throw new Error('Not authorized');
+    //         if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
 
     //         const profile = profiles?.find(profile => profile.profileId === profileId);
     //         if (!profile) throw new Error(`Missing profile ${profileId}`);
@@ -296,11 +304,6 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
 
     // Init/Update Current Profile
     useEffect(() => {
-        const GetCachedCurrentProfileId = async (profile: Profile) => {
-            // return await UserStorage.get(UserStorage.UserKey.CurrentProfile, profile.profileId);
-            return '';
-        };
-
         if (profiles) {
             if (profiles.length === 0) {
                 setCurrentProfile(undefined);
@@ -312,19 +315,17 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                 }
             } else {
                 if (!rootProfile) return;
-                GetCachedCurrentProfileId(rootProfile).then(cachedCurrentProfileId => {
-                    const profile = profiles.find(profile => profile.profileId === cachedCurrentProfileId);
-                    if (profile) {
-                        console.log('Set default profile to last selected profile', profile.profileId);
-                        setCurrentProfile(profile);
-                    } else {
-                        console.log('Set default profile', profiles[0].profileId);
-                        setCurrentProfile(profiles[0]);
-                    }
-                });
+                const profile = profiles.find(profile => profile.profileId === cached?.profileId);
+                if (profile) {
+                    console.log('Set default profile to last selected profile', profile.profileId);
+                    setCurrentProfile(profile);
+                } else {
+                    console.log('Set default profile', profiles[0].profileId);
+                    setCurrentProfile(profiles[0]);
+                }
             }
         }
-    }, [currentProfile, profiles, rootProfile]);
+    }, [cached, currentProfile, profiles, rootProfile]);
 
     // Update locale for root profile whenever switch/login to an account
     useEffect(() => {
@@ -367,15 +368,15 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
             createProfile,
             updateProfile,
             deleteProfile,
-            createTag,
-            updateTag,
-            deleteTag,
-            createIdentity,
-            updateIdentity,
-            deleteIdentity,
-            createAddress,
+            // createTag,
+            // updateTag,
+            // deleteTag,
+            // createIdentity,
+            // updateIdentity,
+            // deleteIdentity,
+            // createAddress,
         }),
-        [isReady, profiles, rootProfile, currentProfile, createProfile, updateProfile, deleteProfile, createTag, updateTag, deleteTag, createIdentity, updateIdentity, deleteIdentity, createAddress],
+        [isReady, profiles, rootProfile, currentProfile, createProfile, updateProfile, deleteProfile],
     );
 
     return <ProfileContext.Provider value={profileContext}>{children}</ProfileContext.Provider>;

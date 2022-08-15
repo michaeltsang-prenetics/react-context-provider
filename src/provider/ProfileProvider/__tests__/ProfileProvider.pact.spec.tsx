@@ -44,7 +44,7 @@ const createProfileContext = {
 const provider = new PactV3({
     consumer: 'reactcontextprovider',
     provider: 'profile',
-    logLevel: 'warn',
+    logLevel: 'error',
     dir: path.resolve(process.cwd(), '.pact'),
 });
 
