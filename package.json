@@ -30,7 +30,11 @@
   },
   "jest": {
     "testEnvironment": "jsdom",
-    "coverageReporters": ["text", "text-summary"]
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "text-summary"
+    ]
   },
   "peerDependencies": {
     "react": ">=16"
