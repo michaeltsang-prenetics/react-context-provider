@@ -1,6 +1,6 @@
 {
-  "name": "react-context-provider",
-  "version": "0.1.0",
+  "name": "@michaeltsang-prenetics/react-context-provider",
+  "version": "0.4.0",
   "license": "MIT",
   "author": "Michael Tsang",
   "main": "dist/index.js",
@@ -17,21 +17,24 @@
     "prepare": "dts build",
     "size": "size-limit",
     "start": "dts watch",
-    "test": "dts test --passWithNoTests"
+    "test": "dts test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/michaeltsang-prenetics/react-context-provider"
   },
   "husky": {
     "hooks": {
       "pre-commit": "dts lint"
     }
   },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
   "jest": {
-    "testEnvironment": "jsdom"
+    "testEnvironment": "jsdom",
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "text-summary"
+    ]
   },
   "peerDependencies": {
     "react": ">=16"
@@ -42,11 +45,38 @@
   "size-limit": [
     {
       "path": "dist/react-context-provider.cjs.production.min.js",
-      "limit": "10 KB"
+      "limit": "512 KB"
     },
     {
       "path": "dist/react-context-provider.esm.js",
-      "limit": "10 KB"
+      "limit": "512 KB"
     }
-  ]
+  ],
+  "devDependencies": {
+    "@pact-foundation/pact": "^10.1.0",
+    "@size-limit/preset-small-lib": "^8.0.1",
+    "@testing-library/react": "^13.3.0",
+    "@tsconfig/create-react-app": "^1.0.2",
+    "@tsconfig/recommended": "^1.0.1",
+    "@types/jest": "^27.5.2",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/react": "^18.0.17",
+    "@types/react-dom": "^18.0.6",
+    "@types/uuid": "^8.3.4",
+    "dts-cli": "^1.5.2",
+    "husky": "^8.0.1",
+    "jest-mock-extended": "^2.0.7",
+    "jsonwebtoken": "^8.5.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "size-limit": "^8.0.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "jwt-decode": "^3.1.2",
+    "moment": "^2.29.4",
+    "uuid": "^8.3.2"
+  }
 }
