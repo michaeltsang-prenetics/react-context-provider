@@ -1,6 +1,6 @@
 {
   "name": "@michaeltsang-prenetics/react-context-provider",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "author": "Michael Tsang",
   "main": "dist/index.js",
@@ -40,11 +40,11 @@
   "size-limit": [
     {
       "path": "dist/react-context-provider.cjs.production.min.js",
-      "limit": "10 KB"
+      "limit": "512 KB"
     },
     {
       "path": "dist/react-context-provider.esm.js",
-      "limit": "10 KB"
+      "limit": "512 KB"
     }
   ],
   "devDependencies": {

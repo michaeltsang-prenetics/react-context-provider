@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useContext, useState } from 'react';
 import { AuthContext } from './context/AuthContext';
 import * as AuthService from '../../service/api/authentication/authentication';
 import * as CustomerService from '../../service/api/customer/customer';
@@ -146,3 +146,5 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
 
     return <AuthContext.Provider value={authContext}>{children}</AuthContext.Provider>;
 };
+
+export const useAuth = () => useContext(AuthContext);

@@ -2,11 +2,10 @@ import path from 'path';
 import { PactV3 } from '@pact-foundation/pact';
 import { email, term } from '@pact-foundation/pact/src/dsl/matchers';
 import axios from 'axios';
-import { AuthProvider } from '../AuthProvider';
+import { AuthProvider, useAuth } from '../AuthProvider';
 import { act, renderHook } from '@testing-library/react';
 import { ValidationRegex } from '../../../helper/regex';
 import { AuthenticationError, AuthenticationErrorReason } from '../../../type/error/AuthenticationError';
-import { useAuth } from '../../..';
 
 const provider = new PactV3({
     consumer: 'reactcontextprovider',
