@@ -7,14 +7,22 @@ import * as JWT from '../../helper/jwt';
 import { getRoles, Role } from '../../helper/jwt';
 import axios from 'axios';
 import { AuthenticationError, AuthenticationErrorReason } from '../../type/error/AuthenticationError';
+import { PropsWithErrorCapturing } from '../../type/provider/Props';
 
 type Props = {
     init?: { token: string };
     locale?: string;
 };
 
-export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, init, locale = 'en-HK' }) => {
+export const AuthProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing<Props>>> = ({ children, init, locale = 'en-HK', capturing }) => {
     const [authToken, setAuthToken] = useState<string | undefined>(init?.token);
+
+    const capture = useCallback(
+        (e: unknown) => {
+            if (capturing) capturing(e);
+        },
+        [capturing],
+    );
 
     const requestOtp = useCallback(
         async (email: string, verify: boolean) => {
@@ -29,6 +37,7 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, ini
                     ApiErrorHandler,
                 );
             } catch (e) {
+                capture(e);
                 if (axios.isAxiosError(e)) {
                     const status = e.response?.status;
                     if (status === 429) {
@@ -53,7 +62,7 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, ini
                 throw new AuthenticationError(AuthenticationErrorReason.General);
             }
         },
-        [locale],
+        [capture, locale],
     );
 
     const verifyOtp = async (email: string, otp: string) => {
@@ -114,25 +123,29 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, ini
         setAuthToken(undefined);
     }, []);
 
-    const updatePassword = useCallback(async (password: string, jwt: string) => {
-        const uid = JWT.getUserId(jwt);
-        if (!uid) {
-            throw new Error('Missing user ID');
-        }
+    const updatePassword = useCallback(
+        async (password: string, jwt: string) => {
+            const uid = JWT.getUserId(jwt);
+            if (!uid) {
+                throw new Error('Missing user ID');
+            }
 
-        try {
-            await AuthService.putUpdateUser(
-                {
-                    userid: uid,
-                    info: { password },
-                },
-                jwt,
-                ApiErrorHandler,
-            );
-        } catch (e) {
-            throw e;
-        }
-    }, []);
+            try {
+                await AuthService.putUpdateUser(
+                    {
+                        userid: uid,
+                        info: { password },
+                    },
+                    jwt,
+                    ApiErrorHandler,
+                );
+            } catch (e) {
+                capture(e);
+                throw e;
+            }
+        },
+        [capture],
+    );
 
     const authContext = React.useMemo(
         () => ({

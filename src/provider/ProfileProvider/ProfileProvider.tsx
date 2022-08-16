@@ -9,14 +9,14 @@ import { usePrevious } from '../../hook/usePrevious';
 import { Identity, Profile, ProfileCategory, ProfileIdentity } from '../../service/api/profile/type';
 import { AuthorizationError, AuthorizationErrorReason } from '../../type/error/AuthorizationError';
 import equal from 'fast-deep-equal';
+import { PropsWithErrorCapturing } from '../../type/provider/Props';
 
 type Props = {
     locale?: string;
     pid?: string; // Default profileId
-    capturing?: (e: unknown) => void;
 };
 
-export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, locale = 'en-HK', pid, capturing }) => {
+export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing<Props>>> = ({ children, locale = 'en-HK', pid, capturing }) => {
     // Provider
     const { token } = useAuth();
 
