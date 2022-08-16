@@ -21,6 +21,7 @@ export type ProfileContextType = {
     // updateQuestionnaire: (profileId: string, questionnaire: Questionnaire) => Promise<void>;
 };
 
+/* istanbul ignore next */
 export const ProfileContext = React.createContext<ProfileContextType>({
     isProfileReady: false,
     profiles: undefined,

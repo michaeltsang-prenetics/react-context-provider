@@ -5,18 +5,17 @@ import { ApiErrorHandler } from '../handler';
 import { useAuth } from '../AuthProvider/AuthProvider';
 import { getRootProfile, getStandardProfile } from './filter';
 import { CreateProfileContext } from '../../service/api/profile/profile';
-import equal from 'fast-deep-equal';
 import { usePrevious } from '../../hook/usePrevious';
 import { Profile, ProfileCategory } from '../../service/api/profile/type';
 import { AuthorizationError, AuthorizationErrorReason } from '../../type/error/AuthorizationError';
 
 type Props = {
     locale?: string;
-    cached?: Profile;
+    pid?: string; // Default profileId
     capturing?: (e: unknown) => void;
 };
 
-export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, locale = 'en-HK', cached, capturing }) => {
+export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, locale = 'en-HK', pid, capturing }) => {
     // Provider
     const { token } = useAuth();
 
@@ -59,7 +58,6 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                     token,
                     ApiErrorHandler,
                 );
-                if (!newProfie) throw new Error('Profile creation failed');
                 await refreshProfiles();
                 setCurrentProfile(newProfie);
                 return newProfie;
@@ -77,7 +75,6 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                 if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
 
                 category.preference &&
-                    category.preference?.language &&
                     (await ProfileService.putUpdateProfilePreference(
                         {
                             profileId: profileId,
@@ -89,8 +86,6 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                     ));
 
                 category.name &&
-                    category.name?.firstName &&
-                    category.name?.lastName &&
                     (await ProfileService.putUpdateProfileName(
                         {
                             profileId: profileId,
@@ -102,7 +97,6 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                     ));
 
                 category.health &&
-                    category.health?.gender &&
                     category.health.dob &&
                     category.health.ethnicity &&
                     category.health.height &&
@@ -307,25 +301,19 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
         if (profiles) {
             if (profiles.length === 0) {
                 setCurrentProfile(undefined);
-            } else if (currentProfile) {
-                const update = profiles.find(profile => profile.profileId === currentProfile.profileId);
-                if (!equal(update, currentProfile)) {
-                    console.log('Update default profile', update?.profileId);
-                    setCurrentProfile(update);
-                }
             } else {
                 if (!rootProfile) return;
-                const profile = profiles.find(profile => profile.profileId === cached?.profileId);
-                if (profile) {
-                    console.log('Set default profile to last selected profile', profile.profileId);
-                    setCurrentProfile(profile);
-                } else {
-                    console.log('Set default profile', profiles[0].profileId);
-                    setCurrentProfile(profiles[0]);
-                }
+                console.log('Set default profile', profiles[0].profileId);
+                setCurrentProfile(current => {
+                    const cached = profiles.find(p => p.profileId === pid);
+                    if (!current && pid && cached) {
+                        return cached;
+                    }
+                    return profiles[0];
+                });
             }
         }
-    }, [cached, currentProfile, profiles, rootProfile]);
+    }, [pid, profiles, rootProfile]);
 
     // Update locale for root profile whenever switch/login to an account
     useEffect(() => {
@@ -333,7 +321,7 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
             if (rootProfile.preference?.language !== locale) {
                 console.log(`Update account language to ${locale}`);
                 // Don't really care if it fails
-                updateProfile(rootProfile.profileId, { preference: { language: locale } }, false).catch(error => capture(error));
+                updateProfile(rootProfile.profileId, { preference: { language: locale } }).catch(error => capture(error));
             }
         }
     }, [capture, locale, prevRootProfile?.profileId, rootProfile, updateProfile]);
@@ -364,7 +352,12 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
             profiles,
             rootProfile,
             currentProfile,
-            setCurrentProfile,
+            setCurrentProfile: async (profile?: Profile) => {
+                if (rootProfile && profile && profiles) {
+                    const target = profiles.find(p => p.profileId === profile.profileId);
+                    if (target) setCurrentProfile(target);
+                }
+            },
             createProfile,
             updateProfile,
             deleteProfile,

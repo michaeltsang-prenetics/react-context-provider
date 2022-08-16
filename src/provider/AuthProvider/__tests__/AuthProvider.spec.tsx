@@ -20,7 +20,7 @@ describe('init', () => {
     test('with token successfully', async () => {
         // Arrange
         const { result } = renderHook(() => useAuth(), {
-            wrapper: ({ children }) => <AuthProvider token="AUTH_TOKEN">{children}</AuthProvider>,
+            wrapper: ({ children }) => <AuthProvider init={{ token: 'AUTH_TOKEN' }}>{children}</AuthProvider>,
         });
 
         // Act + Assert
@@ -82,7 +82,7 @@ describe('@logout', () => {
     test('with cached token', async () => {
         // Arrange
         const { result } = renderHook(() => useAuth(), {
-            wrapper: ({ children }) => <AuthProvider token="AUTH_TOKEN">{children}</AuthProvider>,
+            wrapper: ({ children }) => <AuthProvider init={{ token: 'AUTH_TOKEN' }}>{children}</AuthProvider>,
         });
 
         // Act
@@ -131,6 +131,19 @@ describe('@requestOtp', () => {
         // Act + Assert
         await act(async () => {
             await expect(result.current.requestOtp('demo+circle@prenetics.com', false)).rejects.toThrow(new AuthenticationError(AuthenticationErrorReason.NotExists));
+        });
+    });
+
+    test('400 unknown error', async () => {
+        // Arrange
+        (AuthService.postOtpRequest as jest.Mock).mockRejectedValue({ isAxiosError: true, response: { status: 400, data: { random: 'string' } } });
+        const { result } = renderHook(() => useAuth(), {
+            wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+        });
+
+        // Act + Assert
+        await act(async () => {
+            await expect(result.current.requestOtp('demo+circle@prenetics.com', false)).rejects.toThrow(new AuthenticationError(AuthenticationErrorReason.General));
         });
     });
 

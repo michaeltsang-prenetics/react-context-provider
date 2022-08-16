@@ -28,14 +28,6 @@
       "pre-commit": "dts lint"
     }
   },
-  "jest": {
-    "testEnvironment": "jsdom",
-    "collectCoverage": true,
-    "coverageReporters": [
-      "text",
-      "text-summary"
-    ]
-  },
   "peerDependencies": {
     "react": ">=16"
   },

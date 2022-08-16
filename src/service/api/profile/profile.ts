@@ -106,8 +106,8 @@ export const putUpdateProfilePreference = async (context: ProfilePreferenceConte
 
 export type ProfileNameContext = {
     profileId: string;
-    firstName: string;
-    lastName: string;
+    firstName?: string;
+    lastName?: string;
 };
 
 export const putUpdateProfileName = async (context: ProfileNameContext, token: string, handler: ErrorHandler) => {

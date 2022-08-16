@@ -1,5 +1,3 @@
-import moment from 'moment';
-
 export const hasKeys = <T, K extends string | number | symbol>(obj: T, keys: Readonly<K[]>): obj is T & { [P in K]: unknown } => {
     return typeof obj === 'object' && keys.every(k => k in obj);
 };
@@ -44,14 +42,6 @@ export function validateEnum<T extends string>(value: unknown, accepted: T[]): T
     }
 }
 
-export function filterByAcceptedEnum<T>(value: unknown, accepted: T[]): T[] {
-    if (Array.isArray(value)) {
-        return value.filter(item => typeof item === 'string').filter(i => accepted.includes(i));
-    } else {
-        throw new Error('Validation for array failed');
-    }
-}
-
 export function validateArray<T>(value: unknown, validationFunction: (val: unknown) => T) {
     if (Array.isArray(value)) {
         return value.map(validationFunction);
@@ -60,32 +50,32 @@ export function validateArray<T>(value: unknown, validationFunction: (val: unkno
     }
 }
 
-export function parseUnixTimestampToMoment(value: unknown) {
-    if (typeof value !== 'number') {
-        throw new Error('Validation for unix timestamp failed');
-    }
-    const date = moment(value * 1000);
-    if (date.isValid()) {
-        return date;
-    } else {
-        throw new Error('Validation for unix timestamp failed');
-    }
-}
+// export function parseUnixTimestampToMoment(value: unknown) {
+//     if (typeof value !== 'number') {
+//         throw new Error('Validation for unix timestamp failed');
+//     }
+//     const date = moment(value * 1000);
+//     if (date.isValid()) {
+//         return date;
+//     } else {
+//         throw new Error('Validation for unix timestamp failed');
+//     }
+// }
 
-export function validateAndTransformDateTimeString(value: string) {
-    const date = moment(value);
-    if (date.isValid()) {
-        return date.format('LLL');
-    } else {
-        throw new Error('Validation for unix timestamp failed');
-    }
-}
+// export function validateAndTransformDateTimeString(value: string) {
+//     const date = moment(value);
+//     if (date.isValid()) {
+//         return date.format('LLL');
+//     } else {
+//         throw new Error('Validation for unix timestamp failed');
+//     }
+// }
 
-export function validateMoment(value: unknown) {
-    const date = moment(validateString(value));
-    if (date.isValid()) {
-        return date;
-    } else {
-        throw new Error('Validation for string data failed');
-    }
-}
+// export function validateMoment(value: unknown) {
+//     const date = moment(validateString(value));
+//     if (date.isValid()) {
+//         return date;
+//     } else {
+//         throw new Error('Validation for string data failed');
+//     }
+// }

@@ -1,4 +1,5 @@
-import { validateArray, hasKeys, validateString, validateBoolean, filterByAcceptedEnum, validateOptionalString, validateEnum, validateNumber } from '../../../helper/validation';
+import { filterByValues } from '../../../helper/filter';
+import { validateArray, hasKeys, validateString, validateBoolean, validateOptionalString, validateEnum, validateNumber } from '../../../helper/validation';
 import {
     DeleteProfile,
     Ethnicity,
@@ -42,7 +43,7 @@ export const parseProfile = (profile: unknown): Profile => {
         health: hasKeys(profile, ['health']) && isHealth(profile.health) ? parseProfileHealth(profile.health) : undefined,
         tag: hasKeys(profile, ['tag']) ? validateArray(profile.tag, parseProfileTag) : undefined,
         preference: hasKeys(profile, ['preference']) && isPreference(profile.preference) ? parseProfilePreference(profile.preference) : undefined,
-        identity: hasKeys(profile, ['identity']) ? validateArray(filterByAcceptedEnum(profile.identity, Object.values(IdentityType)), parseProfileIdentity) : undefined,
+        identity: hasKeys(profile, ['identity']) ? validateArray(filterByValues(profile.identity, Object.values(IdentityType)), parseProfileIdentity) : undefined,
         address: hasKeys(profile, ['address']) ? (profile.address as ProfileAddress[]) : undefined,
         phone: hasKeys(profile, ['phone']) ? (profile.phone as ProfilePhone[]) : undefined,
     };

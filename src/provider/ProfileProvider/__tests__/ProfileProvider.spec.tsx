@@ -2,9 +2,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { ProfileProvider, useProfile } from '../ProfileProvider';
 import * as ProfileService from '../../../service/api/profile/profile';
 import { useAuth } from '../../AuthProvider/AuthProvider';
-import { CreateProfileContext, DeleteProfileContext } from '../../../service/api/profile/profile';
-import { Profile, Ethnicity, Gender } from '../../../service/api/profile/type';
 import { AuthorizationError, AuthorizationErrorReason } from '../../../type/error/AuthorizationError';
+import { stubCreateProfileContext, stubDeleteProfileContext, stubProfile, stubProfile_JaneB, stubProfile_JohnD, stubRootProfile, stubRootProfileWithoutLanguage } from './resource/stub';
 
 jest.mock('../../../service/api/profile/profile');
 jest.mock('../../AuthProvider/AuthProvider');
@@ -14,97 +13,40 @@ afterEach(() => {
     jest.resetAllMocks();
 });
 
-const stubRootProfile: Profile = {
-    profileId: 'e7f42a4f-7357-427c-b205-8a52e9861d07',
-    owner: '361d8359-af79-4fb6-9508-4e1bfe3754de',
-    root: true,
-    name: {
-        nameId: '8ae2694b-c633-43bb-b67e-50460cc943d9',
-    },
-    email: [
-        {
-            emailId: 'c9cfbbef-22d1-4edc-a89e-137074ecd335',
-            datetime: '2022-01-08T19:57:46.573Z',
-            primary: true,
-            name: 'email',
-            email: 'mtcircle17@prenetics.com',
-        },
-    ],
-    tag: [],
-    preference: {
-        preferenceId: '85f6de6a-7a3f-41c3-9600-ce46e06cbd9c',
-        language: 'en-HK',
-    },
-};
-
-const stubProfile: Profile = {
-    profileId: '28264924-25a6-4d65-be8a-6ba4d598b3d3',
-    owner: 'ec8164b4-5d6c-409e-9ab8-b29f26eb978f',
-    root: false,
-    name: {
-        firstName: 'Mock',
-        lastName: 'One',
-    },
-    health: {
-        dob: '1990-12-12',
-        ethnicity: Ethnicity.southAsian,
-        gender: Gender.male,
-        healthId: 'ce51f3e7-4cbb-4ba3-b094-8d5dc615b058',
-        height: {
-            value: 66,
-            unit: 'cm',
-        },
-        weight: {
-            value: 55.1,
-            unit: 'kg',
-        },
-    },
-    email: [],
-    tag: [],
-    preference: { language: 'en-HK', preferenceId: 'c0c1c4c4-9273-4b74-ac29-b9d600082020' },
-    phone: [{ number: '98765432', countryCode: 'hk', name: 'xPhone', datetime: '2022-01-08T19:57:46.573Z' }],
-};
-
-const stubProfile_JohnD: Profile = {
-    profileId: '65185B6C-E311-4ACA-9FE5-9337A4B8C6CA',
-    owner: 'circle',
-    root: false,
-    name: { firstName: 'John', lastName: 'D' },
-};
-
-const stubProfile_JaneB: Profile = {
-    profileId: '6978E6BC-176F-48B2-98DA-13A26DC1A63D',
-    owner: 'circle',
-    root: false,
-    name: { firstName: 'Jane', lastName: 'B' },
-};
-
-const stubDeleteProfileContext: DeleteProfileContext = {
-    profileId: '28264924-25a6-4d65-be8a-6ba4d598b3d3',
-};
-
-const stubCreateProfileContext: CreateProfileContext = {
-    firstName: 'Mock',
-    lastName: 'Test',
-    health: {
-        gender: Gender.male,
-        dob: '1990-11-19',
-        ethnicity: Ethnicity.southAsian,
-    },
-    locale: 'en-HK',
-    email: 'rajesh.be+test1@prenetics.com',
-};
-
 describe('init', () => {
     test('token update should init profile status', async () => {
         // Arrange
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
         (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
+
+        // Act
         const { result } = renderHook(() => useProfile(), {
             wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
         });
 
-        // Act + Assert
+        // Assert
+        expect(result.current.rootProfile).toBeUndefined();
+        expect(result.current.currentProfile).toBeUndefined();
+        expect(result.current.isProfileReady).toBeFalsy();
+        await waitFor(() => {
+            expect(result.current.rootProfile).toEqual(stubRootProfile);
+            expect(result.current.currentProfile).toEqual(stubProfile);
+            expect(result.current.isProfileReady).toBeTruthy();
+        });
+    });
+
+    test('update profile language', async () => {
+        // Arrange
+        // const mockUpdateProfile = ProfileService.putUpdateProfilePreference as jest.Mock;
+        (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfileWithoutLanguage, stubProfile]).mockResolvedValueOnce([stubRootProfile, stubProfile]);
+        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
+
+        // Act
+        const { result } = renderHook(() => useProfile(), {
+            wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+        });
+
+        // Assert
         expect(result.current.rootProfile).toBeUndefined();
         expect(result.current.currentProfile).toBeUndefined();
         expect(result.current.isProfileReady).toBeFalsy();
@@ -118,14 +60,59 @@ describe('init', () => {
     test('with no token should set provider state to be ready', async () => {
         // Arrange
         (useAuth as jest.Mock).mockReturnValue({ token: '' });
+
+        // Act
         const { result } = renderHook(() => useProfile(), {
             wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
         });
 
-        // Act + Assert
+        // Assert
+        await waitFor(() => {
+            expect(result.current.rootProfile).toBeUndefined();
+            expect(result.current.currentProfile).toBeUndefined();
+            expect(result.current.isProfileReady).toBeTruthy();
+        });
+    });
+
+    test('@refreshProfile failed', async () => {
+        // Arrange
+        (ProfileService.getProfiles as jest.Mock).mockImplementation(() => {
+            throw new Error();
+        });
+        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
+
+        // Act
+        const { result } = renderHook(() => useProfile(), {
+            wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+        });
+
+        // Assert
+        await waitFor(() => {
+            expect(result.current.rootProfile).toBeUndefined();
+            expect(result.current.currentProfile).toBeUndefined();
+            expect(result.current.isProfileReady).toBeTruthy();
+        });
+    });
+
+    test('defauld profile', async () => {
+        // Arrange
+        (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile, stubProfile_JohnD]);
+        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
+
+        // Act
+        const { result } = renderHook(() => useProfile(), {
+            wrapper: ({ children }) => <ProfileProvider pid={'65185B6C-E311-4ACA-9FE5-9337A4B8C6CA'}>{children}</ProfileProvider>,
+        });
+
+        // Assert
         expect(result.current.rootProfile).toBeUndefined();
         expect(result.current.currentProfile).toBeUndefined();
-        expect(result.current.isProfileReady).toBeTruthy();
+        expect(result.current.isProfileReady).toBeFalsy();
+        await waitFor(() => {
+            expect(result.current.rootProfile).toEqual(stubRootProfile);
+            expect(result.current.currentProfile).toEqual(stubProfile_JohnD);
+            expect(result.current.isProfileReady).toBeTruthy();
+        });
     });
 });
 
@@ -364,5 +351,57 @@ describe('@deleteProfile', () => {
             await expect(result.current.deleteProfile(stubDeleteProfileContext.profileId)).rejects.toThrow(new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized));
         });
         expect(result.current.profiles).toBeUndefined();
+    });
+});
+
+describe('@setCurrentProfile', () => {
+    test('with correct profile', async () => {
+        // Arrange
+        (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile_JohnD, stubProfile_JaneB]);
+        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
+        const { result } = renderHook(() => useProfile(), {
+            wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+        });
+        // Init with JaneB profile since it is created lasted (according to email creation)
+        expect(result.current.rootProfile).toBeUndefined();
+        expect(result.current.currentProfile).toBeUndefined();
+        expect(result.current.isProfileReady).toBeFalsy();
+        await waitFor(() => {
+            expect(result.current.rootProfile).toEqual(stubRootProfile);
+            expect(result.current.profiles).toEqual([stubProfile_JaneB, stubProfile_JohnD]);
+            expect(result.current.currentProfile).toEqual(stubProfile_JaneB);
+            expect(result.current.isProfileReady).toBeTruthy();
+        });
+
+        // Act
+        await act(() => result.current.setCurrentProfile(stubProfile_JohnD));
+
+        // Assert
+        await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JohnD));
+    });
+
+    test('with unknown profile should not update anything', async () => {
+        // Arrange
+        (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile_JaneB]);
+        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
+        const { result } = renderHook(() => useProfile(), {
+            wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+        });
+        // Init with JaneB profile since it is created lasted (according to email creation)
+        expect(result.current.rootProfile).toBeUndefined();
+        expect(result.current.currentProfile).toBeUndefined();
+        expect(result.current.isProfileReady).toBeFalsy();
+        await waitFor(() => {
+            expect(result.current.rootProfile).toEqual(stubRootProfile);
+            expect(result.current.profiles).toEqual([stubProfile_JaneB]);
+            expect(result.current.currentProfile).toEqual(stubProfile_JaneB);
+            expect(result.current.isProfileReady).toBeTruthy();
+        });
+
+        // Act
+        await act(() => result.current.setCurrentProfile(stubProfile_JohnD));
+
+        // Assert
+        await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
     });
 });

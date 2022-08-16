@@ -9,12 +9,12 @@ import axios from 'axios';
 import { AuthenticationError, AuthenticationErrorReason } from '../../type/error/AuthenticationError';
 
 type Props = {
-    token?: string;
+    init?: { token: string };
     locale?: string;
 };
 
-export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, token, locale = 'en-HK' }) => {
-    const [authToken, setAuthToken] = useState<string | undefined>(token);
+export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, init, locale = 'en-HK' }) => {
+    const [authToken, setAuthToken] = useState<string | undefined>(init?.token);
 
     const requestOtp = useCallback(
         async (email: string, verify: boolean) => {
@@ -29,22 +29,24 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
                     ApiErrorHandler,
                 );
             } catch (e) {
-                if (axios.isAxiosError(e) && e.response?.status === 429) {
-                    throw new AuthenticationError(AuthenticationErrorReason.TooMany);
-                } else if (axios.isAxiosError(e) && e.response?.status === 400) {
-                    const hasErrorMessage = (data: unknown): data is Object & { error_message: string } => {
-                        if (data && typeof data === 'object') {
-                            if ('error_message' in data) {
-                                return true;
+                if (axios.isAxiosError(e)) {
+                    const status = e.response?.status;
+                    if (status === 429) {
+                        throw new AuthenticationError(AuthenticationErrorReason.TooMany);
+                    } else if (status === 400) {
+                        const hasErrorMessage = (data: unknown): data is Object & { error_message: string } => {
+                            if (data && typeof data === 'object') {
+                                if ('error_message' in data) {
+                                    return true;
+                                }
                             }
+                            return false;
+                        };
+
+                        const errMsg = hasErrorMessage(e.response?.data) && e.response?.data.error_message;
+                        if (errMsg && errMsg.match(/^.+does not exist$/)) {
+                            throw new AuthenticationError(AuthenticationErrorReason.NotExists);
                         }
-
-                        return false;
-                    };
-
-                    const errMsg = hasErrorMessage(e.response.data) && e.response.data.error_message;
-                    if (errMsg && errMsg.match(/^.+does not exist$/)) {
-                        throw new AuthenticationError(AuthenticationErrorReason.NotExists);
                     }
                 }
 
@@ -67,7 +69,7 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
 
     const register = useCallback(
         async (email: string, password: string, token: string, location?: string) => {
-            const roles = token ? getRoles(token) : undefined;
+            const roles = getRoles(token);
             if (token && roles) {
                 if (roles.some(role => role === Role.CustomerUser)) {
                     throw new AuthenticationError(AuthenticationErrorReason.AlreadyExists);
