@@ -8,6 +8,7 @@ import { getRoles, Role } from '../../helper/jwt';
 import axios from 'axios';
 import { AuthenticationError, AuthenticationErrorReason } from '../../type/error/AuthenticationError';
 import { PropsWithErrorCapturing } from '../../type/provider/Props';
+import { capture } from '../../helper/error';
 
 type Props = {
     init?: { token: string };
@@ -16,13 +17,6 @@ type Props = {
 
 export const AuthProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing<Props>>> = ({ children, init, locale = 'en-HK', capturing }) => {
     const [authToken, setAuthToken] = useState<string | undefined>(init?.token);
-
-    const capture = useCallback(
-        (e: unknown) => {
-            if (capturing) capturing(e);
-        },
-        [capturing],
-    );
 
     const requestOtp = useCallback(
         async (email: string, verify: boolean) => {
@@ -37,7 +31,7 @@ export const AuthProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing<Pr
                     ApiErrorHandler,
                 );
             } catch (e) {
-                capture(e);
+                capture(e, capturing);
                 if (axios.isAxiosError(e)) {
                     const status = e.response?.status;
                     if (status === 429) {
@@ -62,7 +56,7 @@ export const AuthProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing<Pr
                 throw new AuthenticationError(AuthenticationErrorReason.General);
             }
         },
-        [capture, locale],
+        [capturing, locale],
     );
 
     const verifyOtp = async (email: string, otp: string) => {
@@ -140,11 +134,11 @@ export const AuthProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing<Pr
                     ApiErrorHandler,
                 );
             } catch (e) {
-                capture(e);
+                capture(e, capturing);
                 throw e;
             }
         },
-        [capture],
+        [capturing],
     );
 
     const authContext = React.useMemo(

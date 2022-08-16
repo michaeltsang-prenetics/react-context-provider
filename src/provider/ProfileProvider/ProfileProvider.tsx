@@ -10,6 +10,7 @@ import { Identity, Profile, ProfileCategory, ProfileIdentity } from '../../servi
 import { AuthorizationError, AuthorizationErrorReason } from '../../type/error/AuthorizationError';
 import equal from 'fast-deep-equal';
 import { PropsWithErrorCapturing } from '../../type/provider/Props';
+import { capture } from '../../helper/error';
 
 type Props = {
     locale?: string;
@@ -27,13 +28,6 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
     const [currentProfile, setCurrentProfile] = useState<Profile | undefined>();
     const prevRootProfile = usePrevious(rootProfile);
     const prevCurrentProfile = usePrevious(currentProfile);
-
-    const capture = useCallback(
-        (e: unknown) => {
-            if (capturing) capturing(e);
-        },
-        [capturing],
-    );
 
     const refreshProfiles = useCallback(async () => {
         if (!token) return;
@@ -63,11 +57,11 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
                 setCurrentProfile(newProfie);
                 return newProfie;
             } catch (error) {
-                capture(error);
+                capture(error, capturing);
                 throw error;
             }
         },
-        [capture, refreshProfiles, token],
+        [capturing, refreshProfiles, token],
     );
 
     const updateProfile = useCallback(
@@ -136,11 +130,11 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
                     await refreshProfiles();
                 }
             } catch (error) {
-                capture(error);
+                capture(error, capturing);
                 throw error;
             }
         },
-        [capture, refreshProfiles, token],
+        [capturing, refreshProfiles, token],
     );
 
     const deleteProfile = useCallback(
@@ -282,14 +276,14 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
     useEffect(() => {
         if (token) {
             refreshProfiles()
-                .catch(e => capture(e))
+                .catch(e => capture(e, capturing))
                 .finally(async () => {
                     setReady(true);
                 });
         } else {
             setReady(true);
         }
-    }, [capture, refreshProfiles, token]);
+    }, [capturing, refreshProfiles, token]);
 
     // Init/Update Current Profile
     useEffect(() => {
@@ -326,10 +320,10 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             if (rootProfile.preference?.language !== locale) {
                 console.log(`Update account language to ${locale}`);
                 // Don't really care if it fails
-                updateProfile(rootProfile.profileId, { preference: { language: locale } }).catch(error => capture(error));
+                updateProfile(rootProfile.profileId, { preference: { language: locale } }).catch(error => capture(error, capturing));
             }
         }
-    }, [capture, locale, prevRootProfile?.profileId, rootProfile, updateProfile]);
+    }, [capturing, locale, prevRootProfile?.profileId, rootProfile, updateProfile]);
 
     // Update locale for user profile whenever switching/creating a new profile
     useEffect(() => {
@@ -337,10 +331,10 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             if (currentProfile.preference?.language !== locale) {
                 console.log(`Update profile language to ${locale} from ${currentProfile.preference?.language}`);
                 // Don't really care if it fails
-                updateProfile(currentProfile.profileId, { preference: { language: locale } }, false).catch(error => capture(error));
+                updateProfile(currentProfile.profileId, { preference: { language: locale } }, false).catch(error => capture(error, capturing));
             }
         }
-    }, [locale, prevCurrentProfile, currentProfile, updateProfile, capture]);
+    }, [locale, prevCurrentProfile, currentProfile, updateProfile, capturing]);
 
     // Clean up (Basically logout)
     useEffect(() => {

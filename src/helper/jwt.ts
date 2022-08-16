@@ -1,5 +1,6 @@
 import jwt, { JwtPayload } from 'jwt-decode';
 import moment from 'moment';
+import { capture } from './error';
 
 export enum Role {
     CustomerUser = 'customer_user',
@@ -31,7 +32,7 @@ interface Token extends JwtPayload {
     uid?: string;
 }
 
-const capture = (e: unknown) => {
+const capturing = (e: unknown) => {
     if (e instanceof Error) {
         console.warn(`Invalid jwt: ${e.message}`);
     } else {
@@ -45,7 +46,7 @@ export const getUserId = (input: string): string | undefined => {
         const token = decoded as Token;
         return token.uid;
     } catch (error) {
-        capture(error);
+        capture(error, capturing);
         return;
     }
 };
@@ -56,7 +57,7 @@ export const getRoles = (input: string): Role[] | undefined => {
         const token = decoded as Token;
         return token.roles;
     } catch (error) {
-        capture(error);
+        capture(error, capturing);
         return;
     }
 };
