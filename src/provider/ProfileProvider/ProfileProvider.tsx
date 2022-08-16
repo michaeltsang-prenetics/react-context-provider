@@ -302,19 +302,22 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
             if (profiles.length === 0) {
                 setCurrentProfile(undefined);
             } else {
-                if (!rootProfile) return;
-                setCurrentProfile(current => {
-                    const cached = profiles.find(p => p.profileId === pid);
-                    if (!current && pid && cached) {
-                        console.log('Set cached default profile: ', cached.profileId);
-                        return cached;
-                    }
-                    console.log('Set default profile: ', profiles[0].profileId);
-                    return profiles[0];
-                });
+                const cached = profiles.find(p => p.profileId === pid);
+                if (cached) {
+                    console.log('Set cached default profile: ', cached.profileId);
+                    setCurrentProfile(cached);
+                } else {
+                    setCurrentProfile(current => {
+                        if (!current) {
+                            console.log('Set default profile: ', profiles[0].profileId);
+                            return profiles[0];
+                        }
+                        return current;
+                    });
+                }
             }
         }
-    }, [pid, profiles, rootProfile]);
+    }, [pid, profiles]);
 
     // Update locale for root profile whenever switch/login to an account
     useEffect(() => {

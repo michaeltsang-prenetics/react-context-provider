@@ -78,6 +78,14 @@ export const stubProfile: Profile = {
     phone: [{ number: '98765432', countryCode: 'hk', name: 'xPhone', datetime: '2022-01-08T19:57:46.573Z' }],
 };
 
+export const stubProfile_BareMinimum: Profile = {
+    profileId: '6978E6BC-176F-48B2-98DA-13A26DC1A63D',
+    owner: 'circle',
+    root: false,
+    name: { firstName: 'Bare', lastName: 'Minimum' },
+    email: [],
+};
+
 export const stubProfile_JohnD: Profile = {
     profileId: '65185B6C-E311-4ACA-9FE5-9337A4B8C6CA',
     owner: 'circle',

@@ -3,7 +3,16 @@ import { ProfileProvider, useProfile } from '../ProfileProvider';
 import * as ProfileService from '../../../service/api/profile/profile';
 import { useAuth } from '../../AuthProvider/AuthProvider';
 import { AuthorizationError, AuthorizationErrorReason } from '../../../type/error/AuthorizationError';
-import { stubCreateProfileContext, stubDeleteProfileContext, stubProfile, stubProfile_JaneB, stubProfile_JohnD, stubRootProfile, stubRootProfileWithoutLanguage } from './resource/stub';
+import {
+    stubCreateProfileContext,
+    stubDeleteProfileContext,
+    stubProfile,
+    stubProfile_BareMinimum,
+    stubProfile_JaneB,
+    stubProfile_JohnD,
+    stubRootProfile,
+    stubRootProfileWithoutLanguage,
+} from './resource/stub';
 
 jest.mock('../../../service/api/profile/profile');
 jest.mock('../../AuthProvider/AuthProvider');
@@ -94,9 +103,9 @@ describe('init', () => {
         });
     });
 
-    test('defauld profile', async () => {
+    test('default profile to latest created profile', async () => {
         // Arrange
-        (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile, stubProfile_JohnD]);
+        (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile, stubProfile_JohnD, stubProfile_BareMinimum]);
         (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
 
         // Act
