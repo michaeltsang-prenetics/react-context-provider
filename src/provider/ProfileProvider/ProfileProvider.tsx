@@ -144,15 +144,16 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
                 await ProfileService.deleteRemoveProfile({ profileId: profileId }, token, ApiErrorHandler);
                 await refreshProfiles();
             } catch (error) {
-                capture(error);
+                capture(error, capturing);
                 throw error;
             }
         },
-        [capture, refreshProfiles, token],
+        [capturing, refreshProfiles, token],
     );
 
     const createTag = useCallback(
-        async (profileId: string, tag: string, token: string) => {
+        async (profileId: string, tag: string) => {
+            if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
             await ProfileService.postCreateTag(
                 {
                     profileId,
@@ -163,11 +164,12 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             );
             await refreshProfiles();
         },
-        [refreshProfiles],
+        [refreshProfiles, token],
     );
 
     const updateTag = useCallback(
-        async (profileId: string, tag: string, token: string) => {
+        async (profileId: string, tag: string) => {
+            if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
             await ProfileService.putUpdateTag(
                 {
                     profileId,
@@ -178,11 +180,12 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             );
             await refreshProfiles();
         },
-        [refreshProfiles],
+        [refreshProfiles, token],
     );
 
     const deleteTag = useCallback(
-        async (profileId: string, tagId: string, token: string) => {
+        async (profileId: string, tagId: string) => {
+            if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
             await ProfileService.deleteTag(
                 {
                     profileId,
@@ -193,11 +196,12 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             );
             await refreshProfiles();
         },
-        [refreshProfiles],
+        [refreshProfiles, token],
     );
 
     const createIdentity = useCallback(
-        async (profileId: string, identity: Identity, token: string) => {
+        async (profileId: string, identity: Identity) => {
+            if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
             await ProfileService.postProfileIdentity(
                 {
                     profileId,
@@ -208,11 +212,12 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             );
             await refreshProfiles();
         },
-        [refreshProfiles],
+        [refreshProfiles, token],
     );
 
     const updateIdentity = useCallback(
-        async (profileId: string, profileIdentity: ProfileIdentity, token: string) => {
+        async (profileId: string, profileIdentity: ProfileIdentity) => {
+            if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
             await ProfileService.putUpdateProfileIdentity(
                 {
                     profileId,
@@ -223,11 +228,12 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             );
             await refreshProfiles();
         },
-        [refreshProfiles],
+        [refreshProfiles, token],
     );
 
     const deleteIdentity = useCallback(
-        async (profileId: string, identityId: string, token: string) => {
+        async (profileId: string, identityId: string) => {
+            if (!token) throw new AuthorizationError('Unauthorized', AuthorizationErrorReason.Unauthroized);
             await ProfileService.deleteProfileIdentity(
                 {
                     profileId,
@@ -238,7 +244,7 @@ export const ProfileProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing
             );
             await refreshProfiles();
         },
-        [refreshProfiles],
+        [refreshProfiles, token],
     );
 
     // const createAddress = useCallback(

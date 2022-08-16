@@ -421,7 +421,7 @@ describe('tag', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
 
             // Act
-            await act(() => result.current.createTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN'));
+            await act(() => result.current.createTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG'));
 
             // Assert
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneBWithTag));
@@ -439,11 +439,22 @@ describe('tag', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
 
             // Act
-            await act(() => expect(result.current.createTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN')).rejects.toThrow(Error));
+            await act(() => expect(result.current.createTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG')).rejects.toThrow(Error));
 
             // Assert
             // should not update current profile
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+        });
+
+        test('unauthorized', async () => {
+            // Arrange
+            (useAuth as jest.Mock).mockReturnValue({ token: undefined });
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+
+            // Act + Assert
+            await act(() => expect(result.current.createTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG')).rejects.toThrow(AuthorizationError));
         });
     });
 
@@ -459,7 +470,7 @@ describe('tag', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
 
             // Act
-            await act(() => result.current.updateTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG_UPDATED', 'AUTH_TOKEN'));
+            await act(() => result.current.updateTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG_UPDATED'));
 
             // Assert
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_UpdatedTag));
@@ -478,11 +489,22 @@ describe('tag', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
 
             // Act
-            await act(() => expect(result.current.updateTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN')).rejects.toThrow(Error));
+            await act(() => expect(result.current.updateTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG')).rejects.toThrow(Error));
 
             // Assert
             // Should not update current profile
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+        });
+
+        test('unauthorized', async () => {
+            // Arrange
+            (useAuth as jest.Mock).mockReturnValue({ token: undefined });
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+
+            // Act + Assert
+            await act(() => expect(result.current.updateTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG')).rejects.toThrow(AuthorizationError));
         });
     });
 
@@ -497,7 +519,7 @@ describe('tag', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
 
             // Act
-            await act(() => result.current.deleteTag(stubProfile_JaneB.profileId, 'eece60dc-a7b9-41e9-985f-29b028c09ff3', 'AUTH_TOKEN'));
+            await act(() => result.current.deleteTag(stubProfile_JaneB.profileId, 'eece60dc-a7b9-41e9-985f-29b028c09ff3'));
 
             // Assert
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
@@ -516,11 +538,22 @@ describe('tag', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
 
             // Act
-            await act(() => expect(result.current.deleteTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN')).rejects.toThrow(Error));
+            await act(() => expect(result.current.deleteTag(stubProfile_JaneB.profileId, 'eece60dc-a7b9-41e9-985f-29b028c09ff3')).rejects.toThrow(Error));
 
             // Assert
             // Should not update current profile
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+        });
+
+        test('unauthorized', async () => {
+            // Arrange
+            (useAuth as jest.Mock).mockReturnValue({ token: undefined });
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+
+            // Act + Assert
+            await act(() => expect(result.current.deleteTag(stubProfile_JaneB.profileId, 'eece60dc-a7b9-41e9-985f-29b028c09ff3')).rejects.toThrow(AuthorizationError));
         });
     });
 });
@@ -541,7 +574,7 @@ describe('identity', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
 
             // Act
-            await act(() => result.current.createIdentity(stubProfile_JaneB.profileId, stubIdentity, 'AUTH_TOKEN'));
+            await act(() => result.current.createIdentity(stubProfile_JaneB.profileId, stubIdentity));
 
             // Assert
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
@@ -559,15 +592,26 @@ describe('identity', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
 
             // Act
-            await act(() => expect(result.current.createIdentity(stubProfile_JaneB.profileId, stubIdentity, 'AUTH_TOKEN')).rejects.toThrow(Error));
+            await act(() => expect(result.current.createIdentity(stubProfile_JaneB.profileId, stubIdentity)).rejects.toThrow(Error));
 
             // Assert
             // should not update current profile
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
         });
+
+        test('unauthorized', async () => {
+            // Arrange
+            (useAuth as jest.Mock).mockReturnValue({ token: undefined });
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+
+            // Act + Assert
+            await act(() => expect(result.current.createIdentity(stubProfile_JaneB.profileId, stubIdentity)).rejects.toThrow(AuthorizationError));
+        });
     });
 
-    describe('@updateTag', () => {
+    describe('@updateIdentity', () => {
         test('success', async () => {
             // Arrange
             const stubUpdatedIdentity = { ...stubIdentity, identityValue: '87654321' };
@@ -588,7 +632,7 @@ describe('identity', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
 
             // Act
-            await act(() => result.current.updateIdentity(stubProfile_JaneB.profileId, stubUpdatedIdentity, 'AUTH_TOKEN'));
+            await act(() => result.current.updateIdentity(stubProfile_JaneB.profileId, stubUpdatedIdentity));
 
             // Assert
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_UpdatedIdentity));
@@ -611,11 +655,22 @@ describe('identity', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
 
             // Act
-            await act(() => expect(result.current.updateIdentity(stubProfile_JaneB.profileId, stubUpdatedIdentity, 'AUTH_TOKEN')).rejects.toThrow(Error));
+            await act(() => expect(result.current.updateIdentity(stubProfile_JaneB.profileId, stubUpdatedIdentity)).rejects.toThrow(Error));
 
             // Assert
             // Should not update current profile
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
+        });
+
+        test('unauthorized', async () => {
+            // Arrange
+            (useAuth as jest.Mock).mockReturnValue({ token: undefined });
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+
+            // Act + Assert
+            await act(() => expect(result.current.updateIdentity(stubProfile_JaneB.profileId, stubIdentity)).rejects.toThrow(AuthorizationError));
         });
     });
 
@@ -633,7 +688,7 @@ describe('identity', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
 
             // Act
-            await act(() => result.current.deleteIdentity(stubProfile_JaneB.profileId, stubIdentity.identityId, 'AUTH_TOKEN'));
+            await act(() => result.current.deleteIdentity(stubProfile_JaneB.profileId, stubIdentity.identityId));
 
             // Assert
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
@@ -652,11 +707,22 @@ describe('identity', () => {
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
 
             // Act
-            await act(() => expect(result.current.deleteIdentity(stubProfile_JaneB.profileId, stubIdentity.identityId, 'AUTH_TOKEN')).rejects.toThrow(Error));
+            await act(() => expect(result.current.deleteIdentity(stubProfile_JaneB.profileId, stubIdentity.identityId)).rejects.toThrow(Error));
 
             // Assert
             // Should not update current profile
             await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+        });
+
+        test('unauthorized', async () => {
+            // Arrange
+            (useAuth as jest.Mock).mockReturnValue({ token: undefined });
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+
+            // Act + Assert
+            await act(() => expect(result.current.deleteIdentity(stubProfile_JaneB.profileId, stubIdentity.identityId)).rejects.toThrow(AuthorizationError));
         });
     });
 });
