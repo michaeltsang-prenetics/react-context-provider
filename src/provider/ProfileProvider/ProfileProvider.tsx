@@ -303,12 +303,13 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
                 setCurrentProfile(undefined);
             } else {
                 if (!rootProfile) return;
-                console.log('Set default profile', profiles[0].profileId);
                 setCurrentProfile(current => {
                     const cached = profiles.find(p => p.profileId === pid);
                     if (!current && pid && cached) {
+                        console.log('Set cached default profile: ', cached.profileId);
                         return cached;
                     }
+                    console.log('Set default profile: ', profiles[0].profileId);
                     return profiles[0];
                 });
             }
@@ -355,7 +356,10 @@ export const ProfileProvider: React.FC<PropsWithChildren<Props>> = ({ children, 
             setCurrentProfile: async (profile?: Profile) => {
                 if (rootProfile && profile && profiles) {
                     const target = profiles.find(p => p.profileId === profile.profileId);
-                    if (target) setCurrentProfile(target);
+                    if (target) {
+                        console.log('Set curent profile: ', target.profileId);
+                        setCurrentProfile(target);
+                    }
                 }
             },
             createProfile,
