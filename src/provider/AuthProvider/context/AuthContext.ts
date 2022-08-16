@@ -10,6 +10,7 @@ export type AuthContextType = {
     updatePassword: (passowrd: string, token: string) => Promise<void>;
 };
 
+/* istanbul ignore next */
 export const AuthContext = React.createContext<AuthContextType>({
     token: undefined,
     requestOtp: () => {

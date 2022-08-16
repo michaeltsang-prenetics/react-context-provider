@@ -10,7 +10,7 @@ import { AuthenticationError, AuthenticationErrorReason } from '../../../type/er
 const provider = new PactV3({
     consumer: 'reactcontextprovider',
     provider: 'authentication',
-    logLevel: 'warn',
+    logLevel: 'error',
     dir: path.resolve(process.cwd(), '.pact'),
 });
 

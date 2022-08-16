@@ -7,14 +7,16 @@ import * as JWT from '../../helper/jwt';
 import { getRoles, Role } from '../../helper/jwt';
 import axios from 'axios';
 import { AuthenticationError, AuthenticationErrorReason } from '../../type/error/AuthenticationError';
+import { PropsWithErrorCapturing } from '../../type/provider/Props';
+import { capture } from '../../helper/error';
 
 type Props = {
-    token?: string;
+    init?: { token: string };
     locale?: string;
 };
 
-export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, token, locale = 'en-HK' }) => {
-    const [authToken, setAuthToken] = useState<string | undefined>(token);
+export const AuthProvider: React.FC<PropsWithChildren<PropsWithErrorCapturing<Props>>> = ({ children, init, locale = 'en-HK', capturing }) => {
+    const [authToken, setAuthToken] = useState<string | undefined>(init?.token);
 
     const requestOtp = useCallback(
         async (email: string, verify: boolean) => {
@@ -29,29 +31,32 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
                     ApiErrorHandler,
                 );
             } catch (e) {
-                if (axios.isAxiosError(e) && e.response?.status === 429) {
-                    throw new AuthenticationError(AuthenticationErrorReason.TooMany);
-                } else if (axios.isAxiosError(e) && e.response?.status === 400) {
-                    const hasErrorMessage = (data: unknown): data is Object & { error_message: string } => {
-                        if (data && typeof data === 'object') {
-                            if ('error_message' in data) {
-                                return true;
+                capture(e, capturing);
+                if (axios.isAxiosError(e)) {
+                    const status = e.response?.status;
+                    if (status === 429) {
+                        throw new AuthenticationError(AuthenticationErrorReason.TooMany);
+                    } else if (status === 400) {
+                        const hasErrorMessage = (data: unknown): data is Object & { error_message: string } => {
+                            if (data && typeof data === 'object') {
+                                if ('error_message' in data) {
+                                    return true;
+                                }
                             }
+                            return false;
+                        };
+
+                        const errMsg = hasErrorMessage(e.response?.data) && e.response?.data.error_message;
+                        if (errMsg && errMsg.match(/^.+does not exist$/)) {
+                            throw new AuthenticationError(AuthenticationErrorReason.NotExists);
                         }
-
-                        return false;
-                    };
-
-                    const errMsg = hasErrorMessage(e.response.data) && e.response.data.error_message;
-                    if (errMsg && errMsg.match(/^.+does not exist$/)) {
-                        throw new AuthenticationError(AuthenticationErrorReason.NotExists);
                     }
                 }
 
                 throw new AuthenticationError(AuthenticationErrorReason.General);
             }
         },
-        [locale],
+        [capturing, locale],
     );
 
     const verifyOtp = async (email: string, otp: string) => {
@@ -67,7 +72,7 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
 
     const register = useCallback(
         async (email: string, password: string, token: string, location?: string) => {
-            const roles = token ? getRoles(token) : undefined;
+            const roles = getRoles(token);
             if (token && roles) {
                 if (roles.some(role => role === Role.CustomerUser)) {
                     throw new AuthenticationError(AuthenticationErrorReason.AlreadyExists);
@@ -112,25 +117,29 @@ export const AuthProvider: React.FC<PropsWithChildren<Props>> = ({ children, tok
         setAuthToken(undefined);
     }, []);
 
-    const updatePassword = useCallback(async (password: string, jwt: string) => {
-        const uid = JWT.getUserId(jwt);
-        if (!uid) {
-            throw new Error('Missing user ID');
-        }
+    const updatePassword = useCallback(
+        async (password: string, jwt: string) => {
+            const uid = JWT.getUserId(jwt);
+            if (!uid) {
+                throw new Error('Missing user ID');
+            }
 
-        try {
-            await AuthService.putUpdateUser(
-                {
-                    userid: uid,
-                    info: { password },
-                },
-                jwt,
-                ApiErrorHandler,
-            );
-        } catch (e) {
-            throw e;
-        }
-    }, []);
+            try {
+                await AuthService.putUpdateUser(
+                    {
+                        userid: uid,
+                        info: { password },
+                    },
+                    jwt,
+                    ApiErrorHandler,
+                );
+            } catch (e) {
+                capture(e, capturing);
+                throw e;
+            }
+        },
+        [capturing],
+    );
 
     const authContext = React.useMemo(
         () => ({
