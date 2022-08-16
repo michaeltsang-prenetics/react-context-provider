@@ -1,6 +1,6 @@
 {
   "name": "@michaeltsang-prenetics/react-context-provider",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "license": "MIT",
   "author": "Michael Tsang",
   "main": "dist/index.js",
@@ -67,6 +67,7 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
+    "fast-deep-equal": "^3.1.3",
     "jwt-decode": "^3.1.2",
     "moment": "^2.29.4",
     "uuid": "^8.3.2"

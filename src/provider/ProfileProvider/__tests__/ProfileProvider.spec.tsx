@@ -13,6 +13,7 @@ import {
     stubRootProfile,
     stubRootProfileWithoutLanguage,
 } from './resource/stub';
+import { IdentityType, Profile } from '../../../service/api/profile/type';
 
 jest.mock('../../../service/api/profile/profile');
 jest.mock('../../AuthProvider/AuthProvider');
@@ -22,11 +23,14 @@ afterEach(() => {
     jest.resetAllMocks();
 });
 
+beforeEach(() => {
+    (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
+});
+
 describe('init', () => {
     test('token update should init profile status', async () => {
         // Arrange
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
 
         // Act
         const { result } = renderHook(() => useProfile(), {
@@ -48,7 +52,6 @@ describe('init', () => {
         // Arrange
         // const mockUpdateProfile = ProfileService.putUpdateProfilePreference as jest.Mock;
         (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfileWithoutLanguage, stubProfile]).mockResolvedValueOnce([stubRootProfile, stubProfile]);
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
 
         // Act
         const { result } = renderHook(() => useProfile(), {
@@ -88,7 +91,6 @@ describe('init', () => {
         (ProfileService.getProfiles as jest.Mock).mockImplementation(() => {
             throw new Error();
         });
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
 
         // Act
         const { result } = renderHook(() => useProfile(), {
@@ -106,7 +108,6 @@ describe('init', () => {
     test('default profile to latest created profile', async () => {
         // Arrange
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile, stubProfile_JohnD, stubProfile_BareMinimum]);
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
 
         // Act
         const { result } = renderHook(() => useProfile(), {
@@ -163,7 +164,6 @@ describe('@createProfile', () => {
 
         test('should keep current profile status', async () => {
             // Arrange
-            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
             (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile_JohnD]);
             const { result } = renderHook(() => useProfile(), {
                 wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
@@ -187,7 +187,6 @@ describe('@updateProfile', () => {
         test('update name', async () => {
             // Arrange
             const profileCategory = { name: stubProfile.name };
-            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
             (ProfileService.putUpdateProfileName as jest.Mock).mockResolvedValue(profileCategory.name);
             (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
             const { result } = renderHook(() => useProfile(), {
@@ -204,7 +203,6 @@ describe('@updateProfile', () => {
         test('update preference', async () => {
             // Arrange
             const profileCategory = { preference: stubProfile.preference };
-            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
             (ProfileService.putUpdateProfilePreference as jest.Mock).mockResolvedValue(profileCategory.preference);
             (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
             const { result } = renderHook(() => useProfile(), {
@@ -221,7 +219,6 @@ describe('@updateProfile', () => {
         test('update health', async () => {
             // Arrange
             const profileCategory = { health: stubProfile.health };
-            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
             (ProfileService.putUpdateProfileHealth as jest.Mock).mockResolvedValue(profileCategory.health);
             (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
             const { result } = renderHook(() => useProfile(), {
@@ -238,7 +235,6 @@ describe('@updateProfile', () => {
         test('update phone', async () => {
             // Arrange
             const profileCategory = { phone: stubProfile.phone ? stubProfile.phone[0] : undefined };
-            (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
             (ProfileService.patchUpdateProfile as jest.Mock).mockResolvedValue(profileCategory);
             (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
             const { result } = renderHook(() => useProfile(), {
@@ -326,7 +322,6 @@ describe('@updateProfile', () => {
 describe('@deleteProfile', () => {
     test('delete current profile should reset profile status', async () => {
         // Arrange
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile]);
         (ProfileService.deleteRemoveProfile as jest.Mock).mockResolvedValue(stubDeleteProfileContext);
         const { result } = renderHook(() => useProfile(), {
@@ -367,7 +362,6 @@ describe('@setCurrentProfile', () => {
     test('with correct profile', async () => {
         // Arrange
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile_JohnD, stubProfile_JaneB]);
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
         const { result } = renderHook(() => useProfile(), {
             wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
         });
@@ -392,7 +386,6 @@ describe('@setCurrentProfile', () => {
     test('with unknown profile should not update anything', async () => {
         // Arrange
         (ProfileService.getProfiles as jest.Mock).mockResolvedValue([stubRootProfile, stubProfile_JaneB]);
-        (useAuth as jest.Mock).mockReturnValue({ token: 'AUTH_TOKEN' });
         const { result } = renderHook(() => useProfile(), {
             wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
         });
@@ -412,5 +405,258 @@ describe('@setCurrentProfile', () => {
 
         // Assert
         await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+    });
+});
+
+describe('tag', () => {
+    describe('@createTag', () => {
+        test('success', async () => {
+            // Arrange
+            const stubProfile_JaneBWithTag: Profile = { ...stubProfile_JaneB, tag: [{ tagId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', tag: 'CUSTOM_TAG' }] };
+            (ProfileService.postCreateTag as jest.Mock).mockResolvedValue({});
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneBWithTag]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+
+            // Act
+            await act(() => result.current.createTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN'));
+
+            // Assert
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneBWithTag));
+        });
+
+        test('failure', async () => {
+            // Arrange
+            (ProfileService.postCreateTag as jest.Mock).mockImplementation(() => {
+                throw new Error();
+            });
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+
+            // Act
+            await act(() => expect(result.current.createTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN')).rejects.toThrow(Error));
+
+            // Assert
+            // should not update current profile
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+        });
+    });
+
+    describe('@updateTag', () => {
+        test('success', async () => {
+            // Arrange
+            const stubProfile_JaneB_WithTag: Profile = { ...stubProfile_JaneB, tag: [{ tagId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', tag: 'CUSTOM_TAG' }] };
+            const stubProfile_JaneB_UpdatedTag: Profile = { ...stubProfile_JaneB, tag: [{ tagId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', tag: 'CUSTOM_TAG_UPDATED' }] };
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_UpdatedTag]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+
+            // Act
+            await act(() => result.current.updateTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG_UPDATED', 'AUTH_TOKEN'));
+
+            // Assert
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_UpdatedTag));
+        });
+
+        test('failure', async () => {
+            // Arrange
+            const stubProfile_JaneB_WithTag: Profile = { ...stubProfile_JaneB, tag: [{ tagId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', tag: 'CUSTOM_TAG' }] };
+            (ProfileService.putUpdateTag as jest.Mock).mockImplementation(() => {
+                throw new Error();
+            });
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+
+            // Act
+            await act(() => expect(result.current.updateTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN')).rejects.toThrow(Error));
+
+            // Assert
+            // Should not update current profile
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+        });
+    });
+
+    describe('@deleteTag', () => {
+        test('success', async () => {
+            // Arrange
+            const stubProfile_JaneB_WithTag: Profile = { ...stubProfile_JaneB, tag: [{ tagId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', tag: 'CUSTOM_TAG' }] };
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+
+            // Act
+            await act(() => result.current.deleteTag(stubProfile_JaneB.profileId, 'eece60dc-a7b9-41e9-985f-29b028c09ff3', 'AUTH_TOKEN'));
+
+            // Assert
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+        });
+
+        test('failure', async () => {
+            // Arrange
+            const stubProfile_JaneB_WithTag: Profile = { ...stubProfile_JaneB, tag: [{ tagId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', tag: 'CUSTOM_TAG' }] };
+            (ProfileService.deleteTag as jest.Mock).mockImplementation(() => {
+                throw new Error();
+            });
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+
+            // Act
+            await act(() => expect(result.current.deleteTag(stubProfile_JaneB.profileId, 'CUSTOM_TAG', 'AUTH_TOKEN')).rejects.toThrow(Error));
+
+            // Assert
+            // Should not update current profile
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+        });
+    });
+});
+
+describe('identity', () => {
+    const stubIdentity = { identityId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', identityType: IdentityType.hkid, identityValue: '12345678' };
+    describe('@createIdentity', () => {
+        test('success', async () => {
+            // Arrange
+            const stubProfile_JaneB_WithIdentity: Profile = {
+                ...stubProfile_JaneB,
+                identity: [stubIdentity],
+            };
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithIdentity]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+
+            // Act
+            await act(() => result.current.createIdentity(stubProfile_JaneB.profileId, stubIdentity, 'AUTH_TOKEN'));
+
+            // Assert
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
+        });
+
+        test('failure', async () => {
+            // Arrange
+            (ProfileService.postProfileIdentity as jest.Mock).mockImplementation(() => {
+                throw new Error();
+            });
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+
+            // Act
+            await act(() => expect(result.current.createIdentity(stubProfile_JaneB.profileId, stubIdentity, 'AUTH_TOKEN')).rejects.toThrow(Error));
+
+            // Assert
+            // should not update current profile
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+        });
+    });
+
+    describe('@updateTag', () => {
+        test('success', async () => {
+            // Arrange
+            const stubUpdatedIdentity = { ...stubIdentity, identityValue: '87654321' };
+            const stubProfile_JaneB_WithIdentity: Profile = {
+                ...stubProfile_JaneB,
+                identity: [stubIdentity],
+            };
+            const stubProfile_JaneB_UpdatedIdentity: Profile = {
+                ...stubProfile_JaneB,
+                identity: [stubUpdatedIdentity],
+            };
+            (ProfileService.getProfiles as jest.Mock)
+                .mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithIdentity])
+                .mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_UpdatedIdentity]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
+
+            // Act
+            await act(() => result.current.updateIdentity(stubProfile_JaneB.profileId, stubUpdatedIdentity, 'AUTH_TOKEN'));
+
+            // Assert
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_UpdatedIdentity));
+        });
+
+        test('failure', async () => {
+            // Arrange
+            const stubUpdatedIdentity = { ...stubIdentity, identityValue: '87654321' };
+            const stubProfile_JaneB_WithIdentity: Profile = {
+                ...stubProfile_JaneB,
+                identity: [stubIdentity],
+            };
+            (ProfileService.putUpdateProfileIdentity as jest.Mock).mockImplementation(() => {
+                throw new Error();
+            });
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithIdentity]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithIdentity]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
+
+            // Act
+            await act(() => expect(result.current.updateIdentity(stubProfile_JaneB.profileId, stubUpdatedIdentity, 'AUTH_TOKEN')).rejects.toThrow(Error));
+
+            // Assert
+            // Should not update current profile
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
+        });
+    });
+
+    describe('@deleteIdentity', () => {
+        test('success', async () => {
+            // Arrange
+            const stubProfile_JaneB_WithIdentity: Profile = {
+                ...stubProfile_JaneB,
+                identity: [stubIdentity],
+            };
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithIdentity]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithIdentity));
+
+            // Act
+            await act(() => result.current.deleteIdentity(stubProfile_JaneB.profileId, stubIdentity.identityId, 'AUTH_TOKEN'));
+
+            // Assert
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB));
+        });
+
+        test('failure', async () => {
+            // Arrange
+            const stubProfile_JaneB_WithTag: Profile = { ...stubProfile_JaneB, tag: [{ tagId: 'eece60dc-a7b9-41e9-985f-29b028c09ff3', tag: 'CUSTOM_TAG' }] };
+            (ProfileService.deleteProfileIdentity as jest.Mock).mockImplementation(() => {
+                throw new Error();
+            });
+            (ProfileService.getProfiles as jest.Mock).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]).mockResolvedValueOnce([stubRootProfile, stubProfile_JaneB_WithTag]);
+            const { result } = renderHook(() => useProfile(), {
+                wrapper: ({ children }) => <ProfileProvider>{children}</ProfileProvider>,
+            });
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+
+            // Act
+            await act(() => expect(result.current.deleteIdentity(stubProfile_JaneB.profileId, stubIdentity.identityId, 'AUTH_TOKEN')).rejects.toThrow(Error));
+
+            // Assert
+            // Should not update current profile
+            await waitFor(() => expect(result.current.currentProfile).toEqual(stubProfile_JaneB_WithTag));
+        });
     });
 });
